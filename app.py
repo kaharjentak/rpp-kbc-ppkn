@@ -187,6 +187,7 @@ def buat_file_word_eco():
                             cell.text = teks
                             set_cell_background(cell, "1A365D") 
                             format_cell_margins(cell, top=70, bottom=70, left=90, right=90)
+                            # PERBAIKAN: Mengatur perataan teks header tabel yang benar
                             for p_cell in cell.paragraphs:
                                 p_cell.alignment = WD_ALIGN_PARAGRAPH.CENTER
                                 if p_cell.runs:
