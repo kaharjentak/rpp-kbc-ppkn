@@ -32,26 +32,25 @@ menu_utama = st.sidebar.radio(
     ["📝 Menyusun RPP", "📊 Menyusun Kisi-Kisi", "❓ Membuat Soal"]
 )
 
-st.sidebar.markdown("---")
-st.sidebar.subheader("📄 Identitas Dokumen")
-nama_guru = st.sidebar.text_input("Nama Guru:", value="Kaharuddin, S.Pd")
-mapel = st.sidebar.text_input("Mata Pelajaran:", value="PPKn")
-topik_pokok = st.sidebar.text_input("Topik Pokok:", value="Pancasila dalam Kehidupan Global")
-
 # --- 3. JUDUL UTAMA APLIKASI ---
 st.title("🍎 Sistem Perencanaan & Evaluasi Pembelajaran (KBC)")
-st.caption("Edisi Eco-Friendly (Hemat Kertas): MAN 2 Kota Makassar")
+st.caption("Edisi Eco-Friendly (Hemat Kertas): Pak Kaharuddin, S.Pd - MAN 2 Kota Makassar")
 
-# --- 4. INISIALISASI SESSION STATE DATA ---
+# --- 4. INISIALISASI SESSION STATE DATA (TERPISAH & MANDIRI) ---
 if 'rpp_data' not in st.session_state:
     st.session_state.rpp_data = {
         "bagian_awal": "", "kegiatan_inti": "", "asesmen": "", "lkpd": "", "bahan_bacaan": "", "rubrik": ""
     }
 if 'kisi_data' not in st.session_state:
-    st.session_state.kisi_data = {"konten": ""}
-
+    st.session_state.kisi_data = {
+        "nama_guru": "Kaharuddin, S.Pd", "mapel": "PPKn", "topik": "Pancasila dalam Kehidupan Global",
+        "jumlah_soal": "5", "level_kognitif": "C4 & C5", "konten": ""
+    }
 if 'soal_data' not in st.session_state:
-    st.session_state.soal_data = {"konten": ""}
+    st.session_state.soal_data = {
+        "nama_guru": "Kaharuddin, S.Pd", "mapel": "PPKn", "topik": "Pancasila dalam Kehidupan Global",
+        "jumlah_pg": "5", "jumlah_esai": "2", "konten": ""
+    }
 
 
 # --- 5. FUNGSI CORE AI ---
@@ -99,7 +98,7 @@ def pasang_garis_pembatas_tabel(table, color_hex="D1D5DB"):
     """
     tblPr.append(parse_xml(borders_xml))
 
-def buat_dokumen_word(judul_dokumen, komponen_list):
+def buat_dokumen_word(judul_dokumen, nama_guru, mapel, topik, komponen_list):
     doc = Document()
     
     for section in doc.sections:
@@ -118,7 +117,7 @@ def buat_dokumen_word(judul_dokumen, komponen_list):
     h_run.font.bold = True
     h_run.font.color.rgb = RGBColor(26, 54, 93)
     
-    sub_run = header_p.add_run("MAN 2 Kota Makassar — Kurikulum Berbasis Cinta (KBC)\n")
+    sub_run = header_p.add_run("Integrasi Ekoteologi dalam Kurikulum Berbasis Cinta (KBC) — MAN 2 Kota Makassar\n")
     sub_run.font.name = 'Arial'
     sub_run.font.size = Pt(9.5)
     sub_run.font.italic = True
@@ -130,7 +129,7 @@ def buat_dokumen_word(judul_dokumen, komponen_list):
     
     identitas_data = [
         ("Nama Guru", f": {nama_guru}", "Mata Pelajaran", f": {mapel}"),
-        ("Fase/Kelas", f": F / XII", "Topik Pokok", f": {topik_pokok}")
+        ("Fase/Kelas", f": F / XII", "Topik Pokok", f": {topik}")
     ]
     for i, (k1, v1, k2, v2) in enumerate(identitas_data):
         row = meta_table.rows[i]
@@ -219,152 +218,134 @@ def buat_dokumen_word(judul_dokumen, komponen_list):
 # HALAMAN UTAMA BERDASARKAN PILIHAN MENU
 # ==========================================
 
-# --- MENU 1: MENYUSUN RPP ---
+# --- MENU 1: MENYUSUN RPP (KEMBALI KE STRUKTUR ASLI BAPAK) ---
 if menu_utama == "📝 Menyusun RPP":
-    st.header("Modul Pembuatan RPP Padat & Mendalam")
-    
-    # 1. MENU INPUT (Dropdown Komponen RPP seperti semula)
-    pilihan_bagian = st.selectbox(
-        "Pilih Komponen RPP yang ingin dikerjakan:",
-        ["Bagian Awal & Kompetensi", "Skenario Kegiatan Inti", "Asesmen", "LKPD", "Bahan Bacaan", "Rubrik Penilaian"]
-    )
-    
-    map_key_rpp = {
-        "Bagian Awal & Kompetensi": "bagian_awal", "Skenario Kegiatan Inti": "kegiatan_inti",
-        "Asesmen": "asesmen", "LKPD": "lkpd", "Bahan Bacaan": "bahan_bacaan", "Rubrik Penilaian": "rubrik"
-    }
-    key_rpp = map_key_rpp[pilihan_bagian]
-    
-    # Kolom Input Tambahan untuk Instruksi Khusus Guru (Custom Prompt)
-    input_permintaan_rpp = st.text_input(
-        f"Masukkan instruksi tambahan / sub-materi khusus untuk {pilihan_bagian} (Opsional):",
-        placeholder="Contoh: Fokuskan pada sila ke-3 Pancasila dan hubungkan dengan aksi pelestarian lingkungan mangrove."
-    )
-    
-    # Tampilan Output Utama Teks Area RPP
-    st.session_state.rpp_data[key_rpp] = st.text_area(
-        f"Hasil Konten Teks {pilihan_bagian}:", value=st.session_state.rpp_data[key_rpp], height=300
-    )
-    
-    if st.button(f"✨ Generate {pilihan_bagian} dengan Gemini"):
-        with st.spinner("AI sedang merumuskan materi RPP..."):
-            prompt_dasar = f"Buatlah isi untuk modul {pilihan_bagian} tentang materi '{topik_pokok}' mata pelajaran {mapel} untuk tingkat kelas XII berdasarkan prinsip Kurikulum Berbasis Cinta (KBC). Buat dalam format padat hemat kertas cetak."
-            if input_permintaan_rpp:
-                prompt_dasar += f" Harap sesuaikan juga dengan permintaan guru berikut: {input_permintaan_rpp}"
-            
-            hasil = panggil_ai(prompt_dasar)
-            if hasil:
-                st.session_state.rpp_data[key_rpp] = hasil
-                st.success("Berhasil di-generate! Data otomatis ter-update di kolom teks atas.")
-                st.rerun()
-                
+    # Form identitas diletakkan di atas seperti versi awal Bapak
+    col1, col2 = st.columns(2)
+    with col1:
+        rpp_guru = st.text_input("Nama Guru:", value="Kaharuddin, S.Pd", key="rpp_guru")
+        rpp_mapel = st.text_input("Mata Pelajaran:", value="PPKn", key="rpp_mapel")
+    with col2:
+        rpp_topik = st.text_input("Topik Pokok:", value="Pancasila dalam Kehidupan Global", key="rpp_topik")
+
     st.markdown("---")
-    st.subheader("📥 Cetak Dokumen RPP")
+    st.subheader("Isi Komponen RPP (Generate Otomatis dengan Tombol di Bawah):")
+
+    # Layout tombol generate berderet di atas text area
+    c1, c2, c3, c4, c5, c6 = st.columns(6)
+    
+    if c1.button("✨ Jurnal I"):
+        with st.spinner("Merumuskan..."):
+            st.session_state.rpp_data["bagian_awal"] = panggil_ai(f"Buatlah bagian awal & analisis kompetensi RPP materi '{rpp_topik}' mapel {rpp_mapel} kelas XII Kurikulum KBC padat hemat kertas.")
+    if c2.button("✨ Jurnal II"):
+        with st.spinner("Merumuskan..."):
+            st.session_state.rpp_data["kegiatan_inti"] = panggil_ai(f"Buatlah skenario kegiatan inti pertemuan 1 & 2 RPP materi '{rpp_topik}' mapel {rpp_mapel} kelas XII Kurikulum KBC padat hemat kertas.")
+    if c3.button("✨ Jurnal III"):
+        with st.spinner("Merumuskan..."):
+            st.session_state.rpp_data["asesmen"] = panggil_ai(f"Buatlah asesmen pembelajaran mendalam RPP materi '{rpp_topik}' mapel {rpp_mapel} kelas XII Kurikulum KBC padat hemat kertas.")
+    if c4.button("✨ Jurnal IV"):
+        with st.spinner("Merumuskan..."):
+            st.session_state.rpp_data["lkpd"] = panggil_ai(f"Buatlah Lembar Kerja Peserta Didik (LKPD) RPP materi '{rpp_topik}' mapel {rpp_mapel} kelas XII Kurikulum KBC padat hemat kertas.")
+    if c5.button("✨ Jurnal V"):
+        with st.spinner("Merumuskan..."):
+            st.session_state.rpp_data["bahan_bacaan"] = panggil_ai(f"Buatlah bahan bacaan guru & siswa RPP materi '{rpp_topik}' mapel {rpp_mapel} kelas XII Kurikulum KBC padat hemat kertas.")
+    if c6.button("✨ Jurnal VI"):
+        with st.spinner("Merumuskan..."):
+            st.session_state.rpp_data["rubrik"] = panggil_ai(f"Buatlah rubrik penilaian otentik RPP materi '{rpp_topik}' mapel {rpp_mapel} kelas XII Kurikulum KBC padat hemat kertas.")
+
+    # Kolom Teks Area Pengisian RPP
+    st.session_state.rpp_data["bagian_awal"] = st.text_area("I. BAGIAN AWAL & ANALISIS KOMPETENSI", value=st.session_state.rpp_data["bagian_awal"], height=150)
+    st.session_state.rpp_data["kegiatan_inti"] = st.text_area("II. SKENARIO KEGIATAN INTI (PERTEMUAN 1 & 2)", value=st.session_state.rpp_data["kegiatan_inti"], height=150)
+    st.session_state.rpp_data["asesmen"] = st.text_area("III. ASESMEN PEMBELAJARAN MENDALAM", value=st.session_state.rpp_data["asesmen"], height=150)
+    st.session_state.rpp_data["lkpd"] = st.text_area("IV. LEMBAR KERJA PESERTA DIDIK (LKPD)", value=st.session_state.rpp_data["lkpd"], height=150)
+    st.session_state.rpp_data["bahan_bacaan"] = st.text_area("V. BAHAN BACAAN GURU & SISWA", value=st.session_state.rpp_data["bahan_bacaan"], height=150)
+    st.session_state.rpp_data["rubrik"] = st.text_area("VI. RUBRIK PENILAIAN OTENTIK SISWA", value=st.session_state.rpp_data["rubrik"], height=150)
+
+    st.markdown("---")
     rpp_components = [
         ("I. BAGIAN AWAL & ANALISIS KOMPETENSI", st.session_state.rpp_data["bagian_awal"]),
-        ("II. SKENARIO KEGIATAN INTI", st.session_state.rpp_data["kegiatan_inti"]),
+        ("II. SKENARIO KEGIATAN INTI (PERTEMUAN 1 & 2)", st.session_state.rpp_data["kegiatan_inti"]),
         ("III. ASESMEN PEMBELAJARAN MENDALAM", st.session_state.rpp_data["asesmen"]),
         ("IV. LEMBAR KERJA PESERTA DIDIK (LKPD)", st.session_state.rpp_data["lkpd"]),
         ("V. BAHAN BACAAN GURU & SISWA", st.session_state.rpp_data["bahan_bacaan"]),
         ("VI. RUBRIK PENILAIAN OTENTIK SISWA", st.session_state.rpp_data["rubrik"])
     ]
     
-    if any(v for k, v in st.session_state.rpp_data.items() if v):
-        file_doc = buat_dokumen_word("PERENCANAAN PEMBELAJARAN MENDALAM (RPP / MODUL AJAR)", rpp_components)
-        st.download_button(
-            label="📥 Unduh File RPP (.docx)", 
-            data=file_doc, 
-            file_name=f"RPP_Eco_{topik_pokok.replace(' ', '_')}.docx"
-        )
-    else:
-        st.info("Silakan generate isi RPP terlebih dahulu agar tombol unduh aktif.")
+    file_doc = buat_dokumen_word("PERENCANAAN PEMBELAJARAN MENDALAM (RPP / MODUL AJAR)", rpp_guru, rpp_mapel, rpp_topik, rpp_components)
+    st.download_button(label="📥 Unduh RPP format Word (.docx) - Eco-Friendly", data=file_doc, file_name=f"RPP_Eco_MAN2_{rpp_topik.replace(' ', '_')}.docx")
 
 
 # --- MENU 2: MENYUSUN KISI-KISI ---
 elif menu_utama == "📊 Menyusun Kisi-Kisi":
     st.header("Modul Penyusunan Kisi-Kisi Instrumen Soal")
     
-    # 2. MENU INPUT KHUSUS KISI-KISI
-    input_permintaan_kisi = st.text_area(
-        "Masukkan rincian materi / indikator kompetensi yang ingin dimasukkan ke dalam kisi-kisi:",
-        placeholder="Contoh: Buat 5 nomor soal. Materi tentang Tantangan Global Pancasila, sebaran level kognitif dominan C4 dan C5.",
-        height=100
-    )
+    # Form input khusus untuk menu Kisi-kisi
+    col1, col2 = st.columns(2)
+    with col1:
+        st.session_state.kisi_data["nama_guru"] = st.text_input("Nama Guru:", value=st.session_state.kisi_data["nama_guru"], key="k_guru")
+        st.session_state.kisi_data["mapel"] = st.text_input("Mata Pelajaran:", value=st.session_state.kisi_data["mapel"], key="k_mapel")
+    with col2:
+        st.session_state.kisi_data["topik"] = st.text_input("Topik Pokok:", value=st.session_state.kisi_data["topik"], key="k_topik")
+        col_sub1, col_sub2 = st.columns(2)
+        with col_sub1:
+            st.session_state.kisi_data["jumlah_soal"] = st.text_input("Jumlah Soal:", value=st.session_state.kisi_data["jumlah_soal"], key="k_jumlah")
+        with col_sub2:
+            st.session_state.kisi_data["level_kognitif"] = st.text_input("Level Kognitif:", value=st.session_state.kisi_data["level_kognitif"], key="k_level")
+
+    st.markdown("---")
     
-    # Tampilan Output Utama Teks Area Kisi-kisi
     st.session_state.kisi_data["konten"] = st.text_area(
-        "Hasil Matriks Kisi-Kisi Soal (Format Tabel):", 
-        value=st.session_state.kisi_data["konten"], 
-        height=300
+        "Matriks Kisi-Kisi Soal (Format Tabel):", value=st.session_state.kisi_data["konten"], height=300, key="k_konten"
     )
     
-    if st.button("✨ Generate Kisi-Kisi Soal dengan Gemini"):
-        with st.spinner("AI sedang merancang matriks kisi-kisi..."):
-            prompt_dasar = f"Buatlah tabel kisi-kisi soal evaluasi yang padat untuk materi '{topik_pokok}' mata pelajaran {mapel} kelas XII. Gunakan format tabel Markdown dengan kolom: No, Kompetensi Dasar/Indikator, Indikator Soal, Level Kognitif (C1-C6), Bentuk Soal, Nomor Soal. Buat sepadat mungkin."
-            if input_permintaan_kisi:
-                prompt_dasar += f" Sesuaikan isi tabel matriksnya dengan instruksi khusus ini: {input_permintaan_kisi}"
-            
-            hasil = panggil_ai(prompt_dasar)
+    if st.button("✨ Generate Kisi-Kisi Soal dengan Gemini", key="btn_kisi_run"):
+        with st.spinner("AI sedang merancang tabel kisi-kisi..."):
+            prompt = f"Buatlah tabel kisi-kisi soal evaluasi sejumlah {st.session_state.kisi_data['jumlah_soal']} nomor dengan dominasi level kognitif {st.session_state.kisi_data['level_kognitif']} untuk materi '{st.session_state.kisi_data['topik']}' mata pelajaran {st.session_state.kisi_data['mapel']} kelas XII. Gunakan format tabel Markdown dengan kolom: No, Kompetensi Dasar/Indikator, Indikator Soal, Level Kognitif (C1-C6), Bentuk Soal, Nomor Soal. Buat sepadat mungkin demi hemat kertas."
+            hasil = panggil_ai(prompt)
             if hasil:
                 st.session_state.kisi_data["konten"] = hasil
-                st.success("Kisi-kisi berhasil diperbarui!")
                 st.rerun()
                 
     st.markdown("---")
-    st.subheader("📥 Cetak Kisi-Kisi Soal")
     if st.session_state.kisi_data["konten"]:
-        kisi_components = [("", st.session_state.kisi_data["konten"])]
-        file_doc = buat_dokumen_word("MATRIKS KISI-KISI INSTRUMEN PENILAIAN", kisi_components)
-        st.download_button(
-            label="📥 Unduh File Kisi-Kisi (.docx)", 
-            data=file_doc, 
-            file_name=f"Kisi_Kisi_{topik_pokok.replace(' ', '_')}.docx"
-        )
-    else:
-        st.info("Silakan masukkan input dan klik generate terlebih dahulu untuk mengunduh.")
+        kisi_components = [("MATRIKS KISI-KISI INSTRUMEN PENILAIAN", st.session_state.kisi_data["konten"])]
+        file_doc = buat_dokumen_word("KISI-KISI SOAL EVALUASI", st.session_state.kisi_data["nama_guru"], st.session_state.kisi_data["mapel"], st.session_state.kisi_data["topik"], kisi_components)
+        st.download_button(label="📥 Unduh Kisi-Kisi Soal (.docx)", data=file_doc, file_name=f"Kisi_Kisi_{st.session_state.kisi_data['topik'].replace(' ', '_')}.docx")
 
 
 # --- MENU 3: MEMBUAT SOAL ---
 elif menu_utama == "❓ Membuat Soal":
     st.header("Modul Pembuatan Lembar Soal & Kunci Jawaban")
     
-    # 3. MENU INPUT KHUSUS SOAL EVALUASI
-    input_permintaan_soal = st.text_area(
-        "Masukkan jenis soal, jumlah, atau tipe materi ujian yang Anda inginkan:",
-        placeholder="Contoh: Buat 10 soal pilihan ganda tingkat kesulitan sedang dan 3 soal esai HOTS analisis studi kasus di lingkungan madrasah.",
-        height=100
-    )
+    # Form input khusus untuk menu Bank Soal
+    col1, col2 = st.columns(2)
+    with col1:
+        st.session_state.soal_data["nama_guru"] = st.text_input("Nama Guru:", value=st.session_state.soal_data["nama_guru"], key="s_guru")
+        st.session_state.soal_data["mapel"] = st.text_input("Mata Pelajaran:", value=st.session_state.soal_data["mapel"], key="s_mapel")
+    with col2:
+        st.session_state.soal_data["topik"] = st.text_input("Topik Pokok:", value=st.session_state.soal_data["topik"], key="s_topik")
+        col_sub1, col_sub2 = st.columns(2)
+        with col_sub1:
+            st.session_state.soal_data["jumlah_pg"] = st.text_input("Jumlah Pilihan Ganda:", value=st.session_state.soal_data["jumlah_pg"], key="s_pg")
+        with col_sub2:
+            st.session_state.soal_data["jumlah_esai"] = st.text_input("Jumlah Esai HOTS:", value=st.session_state.soal_data["jumlah_esai"], key="s_esai")
+
+    st.markdown("---")
     
-    # Tampilan Output Utama Teks Area Soal
     st.session_state.soal_data["konten"] = st.text_area(
-        "Hasil Naskah Lembar Soal & Kunci:", 
-        value=st.session_state.soal_data["konten"], 
-        height=300
+        "Naskah Soal & Kunci Jawaban:", value=st.session_state.soal_data["konten"], height=300, key="s_konten"
     )
     
-    if st.button("✨ Generate Lembar Soal dengan Gemini"):
-        with st.spinner("AI sedang memformulasikan daftar soal evaluasi..."):
-            prompt_dasar = f"Buatlah paket lembar soal evaluasi berdasarkan Kurikulum Berbasis Cinta (KBC) dan materi '{topik_pokok}' untuk {mapel} kelas XII. Pilihan ganda A,B,C,D,E disusun horizontal menyamping agar hemat kertas. Sertakan Kunci Jawaban singkat di bawah."
-            if input_permintaan_soal:
-                prompt_dasar += f" Modifikasi paket soalnya dengan aturan khusus dari guru ini: {input_permintaan_soal}"
-            else:
-                prompt_dasar += " Terdiri dari default: 5 soal pilihan ganda dan 2 soal esai HOTS."
-                
-            hasil = panggil_ai(prompt_dasar)
+    if st.button("✨ Generate Paket Soal dengan Gemini", key="btn_soal_run"):
+        with st.spinner("AI sedang menyusun daftar soal..."):
+            prompt = f"Buatlah paket lembar soal evaluasi berdasarkan Kurikulum Berbasis Cinta (KBC) dan materi '{st.session_state.soal_data['topik']}' untuk {st.session_state.soal_data['mapel']} kelas XII. Terdiri dari {st.session_state.soal_data['jumlah_pg']} soal pilihan ganda (beserta pilihan A, B, C, D, E disusun horizontal agar hemat kertas) dan {st.session_state.soal_data['jumlah_esai']} soal esai HOTS mendalam yang mengintegrasikan nilai ekoteologi. Sertakan Kunci Jawaban singkat di bagian paling bawah."
+            hasil = panggil_ai(prompt)
             if hasil:
                 st.session_state.soal_data["konten"] = hasil
-                st.success("Bank soal evaluasi berhasil disimpan!")
                 st.rerun()
                 
     st.markdown("---")
-    st.subheader("📥 Cetak Lembar Soal")
     if st.session_state.soal_data["konten"]:
-        soal_components = [("", st.session_state.soal_data["konten"])]
-        file_doc = buat_dokumen_word("LEMBAR EVALUASI SISWA & KUNCI JAWABAN", soal_components)
-        st.download_button(
-            label="📥 Unduh File Lembar Soal (.docx)", 
-            data=file_doc, 
-            file_name=f"Soal_Evaluasi_{topik_pokok.replace(' ', '_')}.docx"
-        )
-    else:
-        st.info("Silakan masukkan input dan klik generate terlebih dahulu untuk mengunduh.")
+        soal_components = [("LEMBAR EVALUASI SISWA & KUNCI JAWABAN", st.session_state.soal_data["konten"])]
+        file_doc = buat_dokumen_word("LEMBAR SOAL EVALUASI PEMBELAJARAN", st.session_state.soal_data["nama_guru"], st.session_state.soal_data["mapel"], st.session_state.soal_data["topik"], soal_components)
+        st.download_button(label="📥 Unduh Lembar Soal (.docx)", data=file_doc, file_name=f"Soal_Evaluasi_{st.session_state.soal_data['topik'].replace(' ', '_')}.docx")
