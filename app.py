@@ -26,6 +26,7 @@ else:
 st.sidebar.markdown("---")
 st.sidebar.subheader("📌 Pilih Modul Kerja")
 
+# Navigasi Utama Aplikasi (Tiga menu mandiri)
 menu_utama = st.sidebar.radio(
     "Silakan pilih layanan:",
     ["📝 Menyusun RPP", "📊 Menyusun Kisi-Kisi", "❓ Membuat Soal"]
@@ -60,12 +61,12 @@ def panggil_ai(prompt):
             st.error(f"Terjadi kesalahan: {str(e)}")
         return ""
 
-# --- 6. FUNGSI FORMAT WORD EKSPOR (PREMIUM ELEGAN & ECO-FRIENDLY) ---
+# --- 6. FUNGSI FORMAT WORD EKSPOR (PREMIUM & ELEGAN) ---
 def set_cell_background(cell, color_hex):
     shading_xml = f'<w:shd {nsdecls("w")} w:fill="{color_hex}"/>'
     cell._tc.get_or_add_tcPr().append(parse_xml(shading_xml))
 
-def format_cell_margins(cell, top=100, bottom=100, left=140, right=140):
+def format_cell_margins(cell, top=60, bottom=60, left=100, right=100):
     tcPr = cell._tc.get_or_add_tcPr()
     tcMar = OxmlElement('w:tcMar')
     for margin, val in [('top', top), ('bottom', bottom), ('left', left), ('right', right)]:
@@ -75,12 +76,12 @@ def format_cell_margins(cell, top=100, bottom=100, left=140, right=140):
         tcMar.append(node)
     tcPr.append(tcMar)
 
-def pasang_garis_pembatas_tabel(table, color_hex="E2E8F0"):
+def pasang_garis_pembatas_tabel(table, color_hex="CBD5E1"):
     tblPr = table._tbl.tblPr
     borders_xml = f"""
     <w:tblBorders {nsdecls("w")}>
-        <w:top w:val="single" w:sz="6" w:space="0" w:color="{color_hex}"/>
-        <w:bottom w:val="single" w:sz="8" w:space="0" w:color="{color_hex}"/>
+        <w:top w:val="single" w:sz="4" w:space="0" w:color="{color_hex}"/>
+        <w:bottom w:val="single" w:sz="6" w:space="0" w:color="{color_hex}"/>
         <w:insideH w:val="single" w:sz="4" w:space="0" w:color="{color_hex}"/>
         <w:left w:val="none"/>
         <w:right w:val="none"/>
@@ -92,7 +93,7 @@ def pasang_garis_pembatas_tabel(table, color_hex="E2E8F0"):
 def buat_dokumen_word_kbc(judul_dokumen, metadata, isi_konten):
     doc = Document()
     
-    # MARGIN SUPER SEMPIT (1.5 cm / 0.6 Inci) - Eco-Friendly Modern
+    # Margin hemat kertas premium (1.5 cm / 0.6 Inci)
     for section in doc.sections:
         section.page_width = Inches(8.27)
         section.page_height = Inches(11.69)
@@ -101,24 +102,24 @@ def buat_dokumen_word_kbc(judul_dokumen, metadata, isi_konten):
         section.left_margin = Inches(0.6)
         section.right_margin = Inches(0.6)
 
-    # HEADER IDENTITAS UTAMA PREMIUM
+    # JUDUL DOKUMEN UTAMA
     header_p = doc.add_paragraph()
     header_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     header_p.paragraph_format.space_after = Pt(2)
     
     h_run = header_p.add_run(f"{judul_dokumen}\n")
     h_run.font.name = 'Georgia'
-    h_run.font.size = Pt(13)
+    h_run.font.size = Pt(14)
     h_run.font.bold = True
-    h_run.font.color.rgb = RGBColor(30, 58, 138)  # Deep Corporate Navy Blue
+    h_run.font.color.rgb = RGBColor(26, 54, 93)  # Deep Navy Blue
     
     sub_run = header_p.add_run("Integrasi Ekoteologi dalam Kurikulum Berbasis Cinta (KBC) — MAN 2 Kota Makassar\n")
     sub_run.font.name = 'Arial'
     sub_run.font.size = Pt(9.5)
     sub_run.font.italic = True
-    sub_run.font.color.rgb = RGBColor(100, 116, 139)  # Cool Muted Gray
+    sub_run.font.color.rgb = RGBColor(115, 125, 140)
 
-    # Tabel Ringkas Identitas Madrasah (Gaya Minimalis Modern)
+    # KOP IDENTITAS TABEL (DIBUAT SEPERTI BOX PREMIUM)
     meta_table = doc.add_table(rows=3, cols=4)
     meta_table.alignment = WD_TABLE_ALIGNMENT.CENTER
     pasang_garis_pembatas_tabel(meta_table, "E2E8F0")
@@ -136,28 +137,29 @@ def buat_dokumen_word_kbc(judul_dokumen, metadata, isi_konten):
         row.cells[2].text = k2
         row.cells[3].text = v2
         for cell in row.cells:
-            format_cell_margins(cell, top=60, bottom=60, left=100, right=100)
+            set_cell_background(cell, "F8FAFC")  # Background Soft Slate Gray
+            format_cell_margins(cell, top=50, bottom=50, left=90, right=90)
             for p in cell.paragraphs:
-                p.paragraph_format.line_spacing = 1.05
+                p.paragraph_format.line_spacing = 1.0
                 for r in p.runs:
                     r.font.name = 'Arial'
                     r.font.size = Pt(9.5)
                     r.font.color.rgb = RGBColor(71, 85, 105)
 
-    # Garis Ornamen Pembatas Aksentuasi
+    # Hiasan Garis Tebal Estetik di Bawah Identitas Kop
     border_p = doc.add_paragraph()
-    border_p.paragraph_format.space_before = Pt(6)
+    border_p.paragraph_format.space_before = Pt(4)
     border_p.paragraph_format.space_after = Pt(12)
     pBdr = OxmlElement('w:pBdr')
     bottom_border = OxmlElement('w:bottom')
     bottom_border.set(qn('w:val'), 'single')
-    bottom_border.set(qn('w:sz'), '12')  # Sedikit tebal hiasannya
-    bottom_border.set(qn('w:space'), '2')
-    bottom_border.set(qn('w:color'), '1E3A8A')
+    bottom_border.set(qn('w:sz'), '12')  # Garis aksen tebal nan mewah
+    bottom_border.set(qn('w:space'), '1')
+    bottom_border.set(qn('w:color'), '1A365D')
     pBdr.append(bottom_border)
     border_p._p.get_or_add_pPr().append(pBdr)
 
-    # PARSING JURNAL TEKS & TABEL
+    # PARSING TEKS DAN TABEL DARI GEMINI AI
     baris_list = isi_konten.split('\n')
     di_dalam_tabel = False
     tabel_obj = None
@@ -167,7 +169,7 @@ def buat_dokumen_word_kbc(judul_dokumen, metadata, isi_konten):
         if not baris_bersih:
             continue
         
-        # Konversi Tabel Otomatis
+        # Konversi Otomatis Tabel Markdown ke Tabel Word Formal
         if baris_bersih.startswith('|'):
             kolom_data = [k.strip() for k in baris_bersih.split('|')[1:-1]]
             if not kolom_data or all(c == '' or c.startswith('-') for c in kolom_data):
@@ -179,13 +181,13 @@ def buat_dokumen_word_kbc(judul_dokumen, metadata, isi_konten):
                 tabel_obj.alignment = WD_TABLE_ALIGNMENT.CENTER
                 pasang_garis_pembatas_tabel(tabel_obj, "CBD5E1")
                 
-                # Header Tabel Premium
+                # Header Tabel (Biru Gelap Premium, Teks Putih)
                 row = tabel_obj.add_row()
                 for idx, teks in enumerate(kolom_data):
                     cell = row.cells[idx]
                     cell.text = teks
-                    set_cell_background(cell, "1E3A8A")  # Royal Corporate Navy
-                    format_cell_margins(cell, top=100, bottom=100, left=120, right=120)
+                    set_cell_background(cell, "1A365D")
+                    format_cell_margins(cell, top=80, bottom=80, left=100, right=100)
                     for p_cell in cell.paragraphs:
                         p_cell.alignment = WD_ALIGN_PARAGRAPH.CENTER
                         if p_cell.runs:
@@ -195,12 +197,12 @@ def buat_dokumen_word_kbc(judul_dokumen, metadata, isi_konten):
                             p_cell.runs[0].font.size = Pt(9.5)
                 continue
             
-            # Isian Konten Tabel
+            # Isian Konten Baris Tabel
             row = tabel_obj.add_row()
             for idx, teks in enumerate(kolom_data):
                 cell = row.cells[idx]
                 cell.text = teks
-                format_cell_margins(cell, top=70, bottom=70, left=100, right=100)
+                format_cell_margins(cell, top=60, bottom=60, left=90, right=90)
                 for p_cell in cell.paragraphs:
                     p_cell.alignment = WD_ALIGN_PARAGRAPH.LEFT
                     for r in p_cell.runs:
@@ -210,40 +212,39 @@ def buat_dokumen_word_kbc(judul_dokumen, metadata, isi_konten):
         else:
             di_dalam_tabel = False
             
-            # FORMAT JUDUL BAB / HEADING (Elemen Blok Utama)
+            # Pengaturan Format Judul Bab/Heading Utama Resmi
             if baris_bersih.startswith(('A.', 'B.', 'C.', 'D.', 'E.', 'F.', 'G.', 'H.', 'I.', 'J.', 'K.', 'Langkah', 'AWAL', 'INTI', 'PENUTUP', 'ALAT', '1.', '2.', '3.')):
                 p = doc.add_paragraph()
                 p.paragraph_format.space_before = Pt(10)
                 p.paragraph_format.space_after = Pt(4)
-                p.paragraph_format.keep_with_next = True  # Mencegah judul menggantung sendiri
+                p.paragraph_format.keep_with_next = True
                 
                 run = p.add_run(baris_bersih)
                 run.font.bold = True
                 run.font.name = 'Georgia'
                 run.font.size = Pt(11.5)
-                run.font.color.rgb = RGBColor(30, 58, 138)
+                run.font.color.rgb = RGBColor(26, 54, 93)
             else:
-                # FORMAT PARAGRAF ISI TEKS UTAMA (INDENTASI ESTETIK)
+                # Format Teks Paragraf Isi (Justify + Spasi Elegan)
                 p = doc.add_paragraph()
                 p.paragraph_format.space_after = Pt(4)
                 p.paragraph_format.line_spacing = 1.15
                 p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
                 
-                # Ciri paragraf penjabaran dari poin atas diberi jarak masuk ke kanan (Indent)
-                if baris_bersih.startswith(('-', '*', '•')) or (baris_bersih[0].isdigit() and baris_bersih[1] == '.'):
-                    p.paragraph_format.left_indent = Inches(0.2)
-                else:
-                    p.paragraph_format.left_indent = Inches(0.15)
+                # Konversi Tanda Poin List Markdown agar Lebih Rapi Sejajar
+                if baris_bersih.startswith(('* ', '- ', '• ')):
+                    baris_bersih = "•  " + baris_bersih[2:]
+                    p.paragraph_format.left_indent = Inches(0.25)
                 
                 parts = re.split(r'(\*\*.*?\*\*)', baris_bersih)
                 for part in parts:
                     if part.startswith('**') and part.endswith('**'):
                         run = p.add_run(part[2:-2])
                         run.font.bold = True
-                        run.font.color.rgb = RGBColor(15, 23, 42)  # Hitam pekat kontras
+                        run.font.color.rgb = RGBColor(15, 23, 42)
                     else:
                         run = p.add_run(part)
-                        run.font.color.rgb = RGBColor(31, 41, 55)  # Charcoal premium
+                        run.font.color.rgb = RGBColor(51, 65, 85)
                     run.font.name = 'Arial'
                     run.font.size = Pt(10)
                     
@@ -333,7 +334,7 @@ if menu_utama == "📝 Menyusun RPP":
         meta = {"madrasah": v_madrasah, "guru": v_guru, "mapel": v_mapel, "kelas": v_kelas, "topik": v_topik, "waktu": v_waktu}
         file_doc = buat_dokumen_word_kbc("PERENCANAAN PEMBELAJARAN MENDALAM (RPP / MODUL AJAR)", meta, st.session_state.rpp_output)
         st.download_button(
-            label="📥 Download RPP (.docx) - Premium Style", 
+            label="📥 Download RPP (.docx) - Eco-Friendly", 
             data=file_doc, 
             file_name=f"RPP_KBC_{v_subtopik.replace(' ', '_')}.docx"
         )
@@ -401,7 +402,7 @@ elif menu_utama == "📊 Menyusun Kisi-Kisi":
         meta = {"madrasah": k_madrasah, "guru": k_guru, "mapel": k_mapel, "kelas": k_kelas, "topik": k_materi, "waktu": "-"}
         file_doc = buat_dokumen_word_kbc("KISI-KISI PENULISAN SOAL EVALUASI", meta, st.session_state.kisi_output)
         st.download_button(
-            label="📥 Download Kisi-Kisi (.docx) - Premium Style", 
+            label="📥 Download Kisi-Kisi (.docx) - Eco-Friendly", 
             data=file_doc, 
             file_name=f"Kisi_Kisi_KBC_{k_materi.replace(' ', '_')}.docx"
         )
@@ -472,7 +473,7 @@ elif menu_utama == "❓ Membuat Soal":
                    - Untuk opsi Pilihan Ganda Kompleks, susun pilihan jawaban A, B, C, D, E secara horizontal/menyamping untuk menghemat baris kertas.
                    - Untuk opsi Benar / Salah, sertakan ruang singkat bagi siswa untuk memberikan alasan reflektif mereka mengapa memilih jawaban tersebut agar aspek Mindful tercapai.
 
-                Format Output yang Saya Ingenkan:
+                Format Output yang Saya Inginkan:
                 - Buatkan soal yang menyentuh hati dan penalaran tingkat tinggi (HOTS), bersifat narasi atau numerasi.
                 - Urutkan nomor soal dari Pilihan Ganda Kompleks, Benar/Salah, lalu Esai.
                 - Lengkapi setiap nomor soal dengan komponen wajib berikut:
@@ -494,5 +495,7 @@ elif menu_utama == "❓ Membuat Soal":
         meta = {"madrasah": s_madrasah, "guru": s_guru, "mapel": s_mapel, "kelas": s_kelas, "topik": s_materi, "waktu": s_jenis_asesmen}
         file_doc = buat_dokumen_word_kbc("LEMBAR EVALUASI SISWA & KUNCI JAWABAN", meta, st.session_state.soal_output)
         st.download_button(
-            label="📥 Download Lembar Soal (.docx) - Premium Style", 
-            data
+            label="📥 Download Lembar Soal (.docx) - Eco-Friendly", 
+            data=file_doc, 
+            file_name=f"Soal_{s_jenis_asesmen.replace(' ', '_')}_{s_materi.replace(' ', '_')}.docx"
+        )
