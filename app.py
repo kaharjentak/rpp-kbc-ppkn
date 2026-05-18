@@ -397,9 +397,20 @@ elif menu_utama == "❓ Membuat Soal":
         s_guru = st.text_input("Nama Guru:", value="Kaharuddin, S.Pd", key="s_g")
         s_mapel = st.text_input("Mata Pelajaran:", value="PPKn", key="s_mp")
         s_kelas = st.text_input("Kelas / Semester:", value="XII / Ganjil", key="s_kl")
+        
+        # TAMBAHAN 1: Input Pilihan Jenis Asesmen
+        s_jenis_asesmen = st.selectbox(
+            "Jenis Asesmen:", 
+            ["Asesmen Formatif", "Asesmen Sumatif", "Penilaian Harian", "Ujian Tengah Semester (UTS)", "Ujian Akhir Semester (UAS)"],
+            key="s_ja"
+        )
     with col2:
         s_materi = st.text_input("Materi Pokok / Bahasan Ujian:", placeholder="Contoh: Implementasi Etika Konstitusi dalam Kehidupan Berbangsa")
         s_jumlah_pg = st.text_input("Jumlah Soal Pilihan Ganda Kompleks:", value="3")
+        
+        # TAMBAHAN 2: Input Jumlah Soal Benar / Salah
+        s_jumlah_bs = st.text_input("Jumlah Soal Benar / Salah:", value="2", key="s_bs")
+        
         s_jumlah_esai = st.text_input("Jumlah Soal Esai / Studi Kasus HOTS:", value="2")
 
     st.markdown("---")
@@ -416,12 +427,19 @@ elif menu_utama == "❓ Membuat Soal":
             st.error("Silakan lengkapi kolom Materi Pokok terlebih dahulu!")
         else:
             with st.spinner("AI sedang merancang paket soal narasi-numerasi humanis mendalam..."):
+                # PROMPT AI YANG SUDAH DISESUAIKAN DENGAN INPUT BARU BAPAK
                 prompt_soal = f"""
                 Bertindaklah sebagai pembuat soal evaluasi profesional. Buatlah paket soal untuk:
+                - Nama Madrasah: {s_madrasah}
+                - Nama Guru: {s_guru}
                 - Mata Pelajaran: {s_mapel}
                 - Kelas / Semester: {s_kelas}
+                - Jenis Asesmen: {s_jenis_asesmen}
                 - Materi Pokok: {s_materi}
-                - Target: {s_jumlah_pg} Soal Pilihan Ganda Kompleks dan {s_jumlah_esai} Soal Esai/Studi Kasus HOTS.
+                - Target Komposisi Soal: 
+                  1. {s_jumlah_pg} Soal Pilihan Ganda Kompleks
+                  2. {s_jumlah_bs} Soal Tipe Benar / Salah
+                  3. {s_jumlah_esai} Soal Esai / Studi Kasus HOTS.
 
                 Ketentuan dan Karakteristik Soal yang Harus Diikuti:
                 1. Elemen Deep Learning:
@@ -432,11 +450,13 @@ elif menu_utama == "❓ Membuat Soal":
                 2. Elemen Kurikulum Berbasis Cinta (KBC):
                    - Soal harus menginsersikan nilai cinta kasih (cinta sesama, cinta lingkungan, cinta tanah air, atau cinta ilmu pengetahuan).
                    - Mengandung muatan empati, kepedulian sosial, kolaborasi, atau solusi humanis.
-                   - Pilihan jawaban atau rubrik penilaian harus menghargai proses berpikir dan sisi kemanusiaan siswa.
-                   - Jika ada opsi Pilihan Ganda, susun pilihan jawaban A, B, C, D, E secara horizontal/menyamping untuk menghemat baris kertas.
+                   - Pilihan jawaban atau rubrik penilaian harus menghargai proses berpikir dan sisi kemানুsiaan siswa.
+                   - Untuk opsi Pilihan Ganda Kompleks, susun pilihan jawaban A, B, C, D, E secara horizontal/menyamping untuk menghemat baris kertas.
+                   - Untuk opsi Benar / Salah, sertakan ruang singkat bagi siswa untuk memberikan alasan reflektif mereka mengapa memilih jawaban tersebut agar aspek Mindful tercapai.
 
                 Format Output yang Saya Inginkan:
                 - Buatkan soal yang menyentuh hati dan penalaran tingkat tinggi (HOTS), bersifat narasi atau numerasi.
+                - Urutkan nomor soal dari Pilihan Ganda Kompleks, Benar/Salah, lalu Esai.
                 - Lengkapi setiap nomor soal dengan komponen wajib berikut:
                   a. Stimulus/Konteks (Cerita atau skenario yang relevan).
                   b. Pertanyaan yang diajukan.
@@ -453,10 +473,10 @@ elif menu_utama == "❓ Membuat Soal":
 
     st.markdown("---")
     if st.session_state.soal_output:
-        meta = {"madrasah": s_madrasah, "guru": s_guru, "mapel": s_mapel, "kelas": s_kelas, "topik": s_materi, "waktu": "-"}
+        meta = {"madrasah": s_madrasah, "guru": s_guru, "mapel": s_mapel, "kelas": s_kelas, "topik": s_materi, "waktu": s_jenis_asesmen}
         file_doc = buat_dokumen_word_kbc("LEMBAR EVALUASI SISWA & KUNCI JAWABAN", meta, st.session_state.soal_output)
         st.download_button(
             label="📥 Download Lembar Soal (.docx) - Eco-Friendly", 
             data=file_doc, 
-            file_name=f"Soal_Evaluasi_KBC_{s_materi.replace(' ', '_')}.docx"
+            file_name=f"Soal_{s_jenis_asesmen.replace(' ', '_')}_{s_materi.replace(' ', '_')}.docx"
         )
