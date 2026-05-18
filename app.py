@@ -348,7 +348,7 @@ elif menu_utama == "📊 Menyusun Kisi-Kisi":
         k_mapel = st.text_input("Mata Pelajaran:", value="PPKn", key="k_mp")
     with col2:
         k_kelas = st.text_input("Kelas / Semester:", value="XII / Ganjil", key="k_kl")
-        k_materi = st.text_input("Materi Pokok / Sub Materi:", placeholder="Contoh: Tantangan Global Penegakan HAM di Indonesia")
+        k_materi = st.text_input("Sub Materi:", placeholder="Contoh: Tantangan Global Penegakan HAM di Indonesia")
         k_tujuan = st.text_area("Tujuan Pembelajaran Soal Ujian:", placeholder="Contoh: Peserta didik mampu menganalisis dilema penegakan hukum dalam menjaga harmoni sosial...")
 
     st.markdown("---")
@@ -424,6 +424,7 @@ elif menu_utama == "❓ Membuat Soal":
     with col2:
         s_materi = st.text_input("Materi Pokok / Bahasan Ujian:", placeholder="Contoh: Implementasi Etika Konstitusi dalam Kehidupan Berbangsa")
         s_jumlah_pg = st.text_input("Jumlah Soal Pilihan Ganda Kompleks:", value="3")
+        s_jumlah_pg = st.text_input("Jumlah Soal Pilihan Ganda Tetap:", value="3")
         s_jumlah_bs = st.text_input("Jumlah Soal Tipe Benar / Salah:", value="2", key="s_bs")
         s_jumlah_esai = st.text_input("Jumlah Soal Esai / Studi Kasus HOTS:", value="2")
 
