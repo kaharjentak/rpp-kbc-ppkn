@@ -11,7 +11,7 @@ import time
 import re
 
 # --- 1. KONFIGURASI HALAMAN WEB STREAMLIT ---
-st.set_page_config(page_title="Sistem Perangkat Pembelajaran MAN 2 Kota Makassar", layout="wide")
+st.set_page_config(page_title="Sistem Perangkat Pembelajaran KBC MAN 2 Makassar", layout="wide")
 
 # --- 2. SETUP API KEY & NAVIGASI DI SIDEBAR ---
 st.sidebar.title("🔑 Pengaturan & Navigasi")
@@ -26,7 +26,7 @@ else:
 st.sidebar.markdown("---")
 st.sidebar.subheader("📌 Pilih Modul Kerja")
 
-# Navigasi Menu Utama di Sidebar
+# Navigasi Utama Aplikasi (Tiga menu mandiri)
 menu_utama = st.sidebar.radio(
     "Silakan pilih layanan:",
     ["📝 Menyusun RPP", "📊 Menyusun Kisi-Kisi", "❓ Membuat Soal"]
@@ -34,23 +34,15 @@ menu_utama = st.sidebar.radio(
 
 # --- 3. JUDUL UTAMA APLIKASI ---
 st.title("🍎 Sistem Perencanaan & Evaluasi Pembelajaran (KBC)")
-st.caption("Edisi Eco-Friendly (Hemat Kertas): Pak Kaharuddin, S.Pd - MAN 2 Kota Makassar")
+st.caption("Edisi Eco-Friendly (Pembelajaran Mendalam): MAN 2 Kota Makassar")
 
-# --- 4. INISIALISASI SESSION STATE DATA (TERPISAH & MANDIRI) ---
-if 'rpp_data' not in st.session_state:
-    st.session_state.rpp_data = {
-        "bagian_awal": "", "kegiatan_inti": "", "asesmen": "", "lkpd": "", "bahan_bacaan": "", "rubrik": ""
-    }
-if 'kisi_data' not in st.session_state:
-    st.session_state.kisi_data = {
-        "nama_guru": "Kaharuddin, S.Pd", "mapel": "PPKn", "topik": "Pancasila dalam Kehidupan Global",
-        "jumlah_soal": "5", "level_kognitif": "C4 & C5", "konten": ""
-    }
-if 'soal_data' not in st.session_state:
-    st.session_state.soal_data = {
-        "nama_guru": "Kaharuddin, S.Pd", "mapel": "PPKn", "topik": "Pancasila dalam Kehidupan Global",
-        "jumlah_pg": "5", "jumlah_esai": "2", "konten": ""
-    }
+# --- 4. INISIALISASI SESSION STATE DATA (BERDIRI SENDIRI-SENDIRI) ---
+if 'rpp_output' not in st.session_state:
+    st.session_state.rpp_output = ""
+if 'kisi_output' not in st.session_state:
+    st.session_state.kisi_output = ""
+if 'soal_output' not in st.session_state:
+    st.session_state.soal_output = ""
 
 
 # --- 5. FUNGSI CORE AI ---
@@ -69,7 +61,7 @@ def panggil_ai(prompt):
             st.error(f"Terjadi kesalahan: {str(e)}")
         return ""
 
-# --- 6. FUNGSI FORMAT WORD EKSPOR ---
+# --- 6. FUNGSI FORMAT WORD EKSPOR OTOMATIS (ECO-FRIENDLY) ---
 def set_cell_background(cell, color_hex):
     shading_xml = f'<w:shd {nsdecls("w")} w:fill="{color_hex}"/>'
     cell._tc.get_or_add_tcPr().append(parse_xml(shading_xml))
@@ -98,9 +90,10 @@ def pasang_garis_pembatas_tabel(table, color_hex="D1D5DB"):
     """
     tblPr.append(parse_xml(borders_xml))
 
-def buat_dokumen_word(judul_dokumen, nama_guru, mapel, topik, komponen_list):
+def buat_dokumen_word_kbc(judul_dokumen, metadata, isi_konten):
     doc = Document()
     
+    # Margin super sempit 1.5 cm / 0.6 Inci (Eco-Friendly)
     for section in doc.sections:
         section.page_width = Inches(8.27)
         section.page_height = Inches(11.69)
@@ -109,6 +102,7 @@ def buat_dokumen_word(judul_dokumen, nama_guru, mapel, topik, komponen_list):
         section.left_margin = Inches(0.6)
         section.right_margin = Inches(0.6)
 
+    # Header Atas Dokumen
     header_p = doc.add_paragraph()
     header_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     h_run = header_p.add_run(f"{judul_dokumen}\n")
@@ -117,19 +111,21 @@ def buat_dokumen_word(judul_dokumen, nama_guru, mapel, topik, komponen_list):
     h_run.font.bold = True
     h_run.font.color.rgb = RGBColor(26, 54, 93)
     
-    sub_run = header_p.add_run("Integrasi Ekoteologi dalam Kurikulum Berbasis Cinta (KBC) — MAN 2 Kota Makassar\n")
+    sub_run = header_p.add_run("Kurikulum Berbasis Cinta (KBC) — MAN 2 Kota Makassar\n")
     sub_run.font.name = 'Arial'
     sub_run.font.size = Pt(9.5)
     sub_run.font.italic = True
     sub_run.font.color.rgb = RGBColor(100, 110, 125)
 
-    meta_table = doc.add_table(rows=2, cols=4)
+    # Tabel Ringkas Identitas Madrasah
+    meta_table = doc.add_table(rows=3, cols=4)
     meta_table.alignment = WD_TABLE_ALIGNMENT.CENTER
     pasang_garis_pembatas_tabel(meta_table, "A0AEC0")
     
     identitas_data = [
-        ("Nama Guru", f": {nama_guru}", "Mata Pelajaran", f": {mapel}"),
-        ("Fase/Kelas", f": F / XII", "Topik Pokok", f": {topik}")
+        ("Nama Madrasah", f": {metadata.get('madrasah', 'MAN 2 KOTA MAKASSAR')}", "Nama Guru", f": {metadata.get('guru', 'Kaharuddin, S.Pd')}"),
+        ("Mata Pelajaran", f": {metadata.get('mapel', 'PPKn')}", "Fase/Kelas/Smt", f": {metadata.get('kelas', 'F / XII / Ganjil')}"),
+        ("Topik Pokok", f": {metadata.get('topik', '')}", "Alokasi Waktu", f": {metadata.get('waktu', '')}")
     ]
     for i, (k1, v1, k2, v2) in enumerate(identitas_data):
         row = meta_table.rows[i]
@@ -147,63 +143,81 @@ def buat_dokumen_word(judul_dokumen, nama_guru, mapel, topik, komponen_list):
 
     doc.add_paragraph().paragraph_format.space_after = Pt(4)
 
-    for judul, isi in komponen_list:
-        if isi:
-            if judul:
-                h = doc.add_heading(level=1)
-                hrun = h.add_run(judul)
-                hrun.font.name = 'Georgia'
-                hrun.font.size = Pt(11.5)
-                hrun.font.bold = True
-                hrun.font.color.rgb = RGBColor(26, 54, 93)
-                h.paragraph_format.space_before = Pt(8)
-                h.paragraph_format.space_after = Pt(4)
+    # Parsing teks markdown/tabel hasil dari AI ke format paragraf & tabel Word
+    baris_list = isi_konten.split('\n')
+    di_dalam_tabel = False
+    tabel_obj = None
+    
+    for baris in baris_list:
+        baris_bersih = baris.strip()
+        if not baris_bersih:
+            continue
+        
+        # Konversi Otomatis Tabel Markdown ke Tabel Word Resmi
+        if baris_bersih.startswith('|'):
+            kolom_data = [k.strip() for k in baris_bersih.split('|')[1:-1]]
+            if not kolom_data or all(c == '' or c.startswith('-') for c in kolom_data):
+                continue 
             
-            baris_list = isi.split('\n')
-            di_dalam_tabel = False
-            tabel_obj = None
-            
-            for baris in baris_list:
-                baris_bersih = baris.strip()
-                if not baris_bersih:
-                    continue
+            if not di_dalam_tabel:
+                di_dalam_tabel = True
+                tabel_obj = doc.add_table(rows=0, cols=len(kolom_data))
+                tabel_obj.alignment = WD_TABLE_ALIGNMENT.CENTER
+                pasang_garis_pembatas_tabel(tabel_obj)
                 
-                if baris_bersih.startswith('|'):
-                    kolom_data = [k.strip() for k in baris_bersih.split('|')[1:-1]]
-                    if not kolom_data or all(c == '' or c.startswith('-') for c in kolom_data):
-                        continue 
-                    
-                    if not di_dalam_tabel:
-                        di_dalam_tabel = True
-                        tabel_obj = doc.add_table(rows=0, cols=len(kolom_data))
-                        tabel_obj.alignment = WD_TABLE_ALIGNMENT.CENTER
-                        pasang_garis_pembatas_tabel(tabel_obj)
-                        
-                        row = tabel_obj.add_row()
-                        for idx, teks in enumerate(kolom_data):
-                            cell = row.cells[idx]
-                            cell.text = teks
-                            set_cell_background(cell, "1A365D")
-                            format_cell_margins(cell, top=70, bottom=70, left=90, right=90)
-                            for p_cell in cell.paragraphs:
-                                p_cell.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                                if p_cell.runs:
-                                    p_cell.runs[0].font.bold = True
-                                    p_cell.runs[0].font.color.rgb = RGBColor(255, 255, 255)
-                                    p_cell.runs[0].font.name = 'Arial'
-                        continue
-                    
-                    row = tabel_obj.add_row()
-                    for idx, teks in enumerate(kolom_data):
-                        cell = row.cells[idx]
-                        cell.text = teks
-                        format_cell_margins(cell, top=70, bottom=70, left=90, right=90)
-                else:
-                    di_dalam_tabel = False
-                    p = doc.add_paragraph()
-                    p.paragraph_format.space_after = Pt(2)
-                    p.paragraph_format.line_spacing = 1.05
-                    run = p.add_run(baris_bersih)
+                # Header Tabel
+                row = tabel_obj.add_row()
+                for idx, teks in enumerate(kolom_data):
+                    cell = row.cells[idx]
+                    cell.text = teks
+                    set_cell_background(cell, "1A365D")
+                    format_cell_margins(cell, top=70, bottom=70, left=90, right=90)
+                    for p_cell in cell.paragraphs:
+                        p_cell.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                        if p_cell.runs:
+                            p_cell.runs[0].font.bold = True
+                            p_cell.runs[0].font.color.rgb = RGBColor(255, 255, 255)
+                            p_cell.runs[0].font.name = 'Arial'
+                            p_cell.runs[0].font.size = Pt(9.5)
+                continue
+            
+            # Baris Isian Tabel
+            row = tabel_obj.add_row()
+            for idx, teks in enumerate(kolom_data):
+                cell = row.cells[idx]
+                cell.text = teks
+                format_cell_margins(cell, top=60, bottom=60, left=90, right=90)
+                for p_cell in cell.paragraphs:
+                    for r in p_cell.runs:
+                        r.font.name = 'Arial'
+                        r.font.size = Pt(9.5)
+        else:
+            di_dalam_tabel = False
+            
+            # Format Judul Bab/Heading Utama
+            if baris_bersih.startswith(('A.', 'B.', 'C.', 'D.', 'E.', 'F.', 'G.', 'H.', 'I.', 'J.', 'K.', 'Langkah', 'AWAL', 'INTI', 'PENUTUP', 'ALAT', '1.', '2.', '3.')):
+                p = doc.add_paragraph()
+                p.paragraph_format.space_before = Pt(6)
+                p.paragraph_format.space_after = Pt(2)
+                run = p.add_run(baris_bersih)
+                run.font.bold = True
+                run.font.name = 'Georgia'
+                run.font.size = Pt(11)
+                run.font.color.rgb = RGBColor(26, 54, 93)
+            else:
+                # Paragraf Teks Biasa
+                p = doc.add_paragraph()
+                p.paragraph_format.space_after = Pt(2)
+                p.paragraph_format.line_spacing = 1.05
+                
+                # Fungsi cetak teks tebal (bold markdown **)
+                parts = re.split(r'(\*\*.*?\*\*)', baris_bersih)
+                for part in parts:
+                    if part.startswith('**') and part.endswith('**'):
+                        run = p.add_run(part[2:-2])
+                        run.font.bold = True
+                    else:
+                        run = p.add_run(part)
                     run.font.name = 'Arial'
                     run.font.size = Pt(10)
                     run.font.color.rgb = RGBColor(45, 55, 72)
@@ -214,138 +228,235 @@ def buat_dokumen_word(judul_dokumen, nama_guru, mapel, topik, komponen_list):
     return output
 
 
-# ==========================================
-# HALAMAN UTAMA BERDASARKAN PILIHAN MENU
-# ==========================================
-
-# --- MENU 1: MENYUSUN RPP (KEMBALI KE STRUKTUR ASLI BAPAK) ---
+# =========================================================================
+# 📝 MENU 1: MENYUSUN RPP
+# =========================================================================
 if menu_utama == "📝 Menyusun RPP":
-    # Form identitas diletakkan di atas seperti versi awal Bapak
+    st.header("Modul Perencanaan Pembelajaran Mendalam & KBC")
+    st.subheader("📋 Formulir Input Data Utama RPP")
+    
+    # Grid input data formulir di layar utama
     col1, col2 = st.columns(2)
     with col1:
-        rpp_guru = st.text_input("Nama Guru:", value="Kaharuddin, S.Pd", key="rpp_guru")
-        rpp_mapel = st.text_input("Mata Pelajaran:", value="PPKn", key="rpp_mapel")
+        v_madrasah = st.text_input("Nama Madrasah:", value="MAN 2 KOTA MAKASSAR")
+        v_guru = st.text_input("Nama Guru:", value="Kaharuddin, S.Pd")
+        v_mapel = st.text_input("Mata Pelajaran:", value="PPKn")
+        v_kelas = st.text_input("Fase / Kelas / Semester:", value="F / XII / Ganjil")
     with col2:
-        rpp_topik = st.text_input("Topik Pokok:", value="Pancasila dalam Kehidupan Global", key="rpp_topik")
+        v_topik = st.text_input("Topik Pembelajaran:", placeholder="Contoh: Pancasila dalam Kehidupan Global")
+        v_subtopik = st.text_input("Sub Topik Pembelajaran:", placeholder="Contoh: Tantangan Ideologi Pancasila di Era Digital")
+        v_tujuan = st.text_area("Tujuan Pembelajaran Umum:", placeholder="Contoh: Menganalisis peluang dan tantangan penerapan nilai-nilai Pancasila dalam kehidupan global...")
+        v_waktu = st.text_input("Alokasi Waktu / Jumlah Pertemuan:", value="2 x 45 Menit / 1 Pertemuan")
 
     st.markdown("---")
-    st.subheader("Isi Komponen RPP (Generate Otomatis dengan Tombol di Bawah):")
-
-    # Layout tombol generate berderet di atas text area
-    c1, c2, c3, c4, c5, c6 = st.columns(6)
     
-    if c1.button("✨ Jurnal I"):
-        with st.spinner("Merumuskan..."):
-            st.session_state.rpp_data["bagian_awal"] = panggil_ai(f"Buatlah bagian awal & analisis kompetensi RPP materi '{rpp_topik}' mapel {rpp_mapel} kelas XII Kurikulum KBC padat hemat kertas.")
-    if c2.button("✨ Jurnal II"):
-        with st.spinner("Merumuskan..."):
-            st.session_state.rpp_data["kegiatan_inti"] = panggil_ai(f"Buatlah skenario kegiatan inti pertemuan 1 & 2 RPP materi '{rpp_topik}' mapel {rpp_mapel} kelas XII Kurikulum KBC padat hemat kertas.")
-    if c3.button("✨ Jurnal III"):
-        with st.spinner("Merumuskan..."):
-            st.session_state.rpp_data["asesmen"] = panggil_ai(f"Buatlah asesmen pembelajaran mendalam RPP materi '{rpp_topik}' mapel {rpp_mapel} kelas XII Kurikulum KBC padat hemat kertas.")
-    if c4.button("✨ Jurnal IV"):
-        with st.spinner("Merumuskan..."):
-            st.session_state.rpp_data["lkpd"] = panggil_ai(f"Buatlah Lembar Kerja Peserta Didik (LKPD) RPP materi '{rpp_topik}' mapel {rpp_mapel} kelas XII Kurikulum KBC padat hemat kertas.")
-    if c5.button("✨ Jurnal V"):
-        with st.spinner("Merumuskan..."):
-            st.session_state.rpp_data["bahan_bacaan"] = panggil_ai(f"Buatlah bahan bacaan guru & siswa RPP materi '{rpp_topik}' mapel {rpp_mapel} kelas XII Kurikulum KBC padat hemat kertas.")
-    if c6.button("✨ Jurnal VI"):
-        with st.spinner("Merumuskan..."):
-            st.session_state.rpp_data["rubrik"] = panggil_ai(f"Buatlah rubrik penilaian otentik RPP materi '{rpp_topik}' mapel {rpp_mapel} kelas XII Kurikulum KBC padat hemat kertas.")
+    # Area Output Hasil RPP
+    st.subheader("🖥️ Hasil Penyusunan Dokumen RPP")
+    st.session_state.rpp_output = st.text_area(
+        "Draf Teks RPP (Dapat diedit manual sebelum diunduh):", 
+        value=st.session_state.rpp_output, 
+        height=400
+    )
+    
+    if st.button("✨ Generate RPP Sesuai Aturan KBC & Deep Learning"):
+        if not v_topik or not v_subtopik or not v_tujuan:
+            st.error("Silakan lengkapi Topik, Sub-Topik, dan Tujuan Pembelajaran terlebih dahulu!")
+        else:
+            with st.spinner("AI sedang merumuskan draf RPP terstruktur, padat, dan hemat kertas..."):
+                prompt_rpp = f"""
+                Saya seorang guru PPKN jenjang SMA/MA. Buatkan saya RPP sesuai sub materi dan tujuan pembelajaran berikut:
+                Nama Madrasah: {v_madrasah}
+                Nama Guru: {v_guru}
+                Mapel: {v_mapel}
+                Fase/Kelas/Smt: {v_kelas}
+                Topik Pembelajaran: {v_topik}
+                Sub Topik Pembelajaran: {v_subtopik}
+                Tujuan pembelajaran umum: {v_tujuan}
+                Alokasi Waktu /pertemuan: {v_waktu}
 
-    # Kolom Teks Area Pengisian RPP
-    st.session_state.rpp_data["bagian_awal"] = st.text_area("I. BAGIAN AWAL & ANALISIS KOMPETENSI", value=st.session_state.rpp_data["bagian_awal"], height=150)
-    st.session_state.rpp_data["kegiatan_inti"] = st.text_area("II. SKENARIO KEGIATAN INTI (PERTEMUAN 1 & 2)", value=st.session_state.rpp_data["kegiatan_inti"], height=150)
-    st.session_state.rpp_data["asesmen"] = st.text_area("III. ASESMEN PEMBELAJARAN MENDALAM", value=st.session_state.rpp_data["asesmen"], height=150)
-    st.session_state.rpp_data["lkpd"] = st.text_area("IV. LEMBAR KERJA PESERTA DIDIK (LKPD)", value=st.session_state.rpp_data["lkpd"], height=150)
-    st.session_state.rpp_data["bahan_bacaan"] = st.text_area("V. BAHAN BACAAN GURU & SISWA", value=st.session_state.rpp_data["bahan_bacaan"], height=150)
-    st.session_state.rpp_data["rubrik"] = st.text_area("VI. RUBRIK PENILAIAN OTENTIK SISWA", value=st.session_state.rpp_data["rubrik"], height=150)
+                Buat bagian awal rencana pembelajaran dengan spesifikasi berikut secara padat, langsung inti, tanpa spasi berlebih demi hemat kertas:
+                A. Identifikasi Peserta Didik (Kesiapan, pengetahuan awal, minat, latar belakang, kebutuhan. Tulis bentuk poin).
+                B. Identifikasi Materi Pembelajaran (Jenis pengetahuan, relevansi kehidupan nyata, tingkat kesulitan, struktur materi, integrasi nilai/karakter. Tulis bentuk poin).
+                C. Dimensi Profil Lulusan (Pilih 4 dimensi di antara: Keimanan dan Ketakwaan, Kewargaan, Penalaran Kritis, Kreativitas, Kolaborasi, Kemandirian, Kesehatan, Komunikasi).
+                D. Topik Panca Cinta (Pilih 3 topik di antara: Cinta Allah dan Rasul-Nya, Cinta Ilmu, Cinta Lingkungan, Cinta Diri dan Sesama Manusia, Cinta Tanah Air).
+                E. Materi Integrasi KBC (Tuliskan materi integrasi ekoteologi dalam Kurikulum Berbasis Cinta (KBC) yang relevan dalam bentuk paragraf).
+                F. Topik Pembelajaran (Relevan dengan capaian dan tujuan).
+                G. Tujuan Pembelajaran (Tulis tujuan umum, lalu tujuan rinci per pertemuan mencakup subjek, pengetahuan, keterampilan/sikap dengan KKO terukur).
+                H. Praktik Pedagogis (Tentukan Model/Strategi/Metode yang sesuai dengan sub topik untuk mencapai dimensi profil lulusan).
+                I. Kemitraan Pembelajaran (Mitra kolaborasi di lingkungan sekolah, luar sekolah, atau masyarakat).
+                J. Lingkungan Pembelajaran (Integrasi ruang fisik, virtual, dan budaya belajar).
+                K. Pemanfaatan Digital (Pemanfaatan teknologi digital interaktif dan kontekstual).
+
+                Berdasarkan hasil di atas, buat langkah pembelajaran yang memuat prinsip pembelajaran mendalam (berkesadaran, bermakna, menggembirakan) sesuai jumlah pertemuan di atas:
+                Langkah – Langkah Pembelajaran:
+                - AWAL (Sebutkan prinsip pembelajaran. Pembuka, salam, cek kehadiran, kondisi siap belajar, orientasi bermakna, apersepsi kontekstual, penyampaian tujuan, motivasi menggembirakan).
+                - INTI:
+                  1. Memahami (Sebutkan prinsip pembelajaran. Membangun kesadaran murid terhadap tujuan, aktif mengonstruksi pengetahuan mendalam konsep/materi dari berbagai sumber).
+                  2. Mengaplikasi (Sebutkan prinsip pembelajaran. Menerapkan pengetahuan individu/kolaboratif melalui pemecahan masalah, pengambilan keputusan, dll).
+                  3. Merefleksi (Sebutkan prinsip pembelajaran. Murid mengevaluasi dan memaknai proses/hasil praktik nyata, sejauh mana tujuan tercapai, kekuatan, tantangan, area perbaikan).
+                - PENUTUP (Sebutkan prinsip pembelajaran. Umpan balik konstruktif, menyimpulkan pembelajaran, keterlibatan perencanaan pembelajaran selanjutnya).
+
+                ALAT DAN MEDIA PEMBELAJARAN
+                (Tentukan Alat dan Media Pembelajaran sesuai dengan sub topik dan Tujuan pembelajaran setiap pertemuan).
+                """
+                hasil = panggil_ai(prompt_rpp)
+                if hasil:
+                    st.session_state.rpp_output = hasil
+                    st.success("RPP berhasil dibuat! Silakan cek kolom teks di atas.")
+                    st.rerun()
 
     st.markdown("---")
-    rpp_components = [
-        ("I. BAGIAN AWAL & ANALISIS KOMPETENSI", st.session_state.rpp_data["bagian_awal"]),
-        ("II. SKENARIO KEGIATAN INTI (PERTEMUAN 1 & 2)", st.session_state.rpp_data["kegiatan_inti"]),
-        ("III. ASESMEN PEMBELAJARAN MENDALAM", st.session_state.rpp_data["asesmen"]),
-        ("IV. LEMBAR KERJA PESERTA DIDIK (LKPD)", st.session_state.rpp_data["lkpd"]),
-        ("V. BAHAN BACAAN GURU & SISWA", st.session_state.rpp_data["bahan_bacaan"]),
-        ("VI. RUBRIK PENILAIAN OTENTIK SISWA", st.session_state.rpp_data["rubrik"])
-    ]
-    
-    file_doc = buat_dokumen_word("PERENCANAAN PEMBELAJARAN MENDALAM (RPP / MODUL AJAR)", rpp_guru, rpp_mapel, rpp_topik, rpp_components)
-    st.download_button(label="📥 Unduh RPP format Word (.docx) - Eco-Friendly", data=file_doc, file_name=f"RPP_Eco_MAN2_{rpp_topik.replace(' ', '_')}.docx")
+    if st.session_state.rpp_output:
+        meta = {"madrasah": v_madrasah, "guru": v_guru, "mapel": v_mapel, "kelas": v_kelas, "topik": v_topik, "waktu": v_waktu}
+        file_doc = buat_dokumen_word_kbc("PERENCANAAN PEMBELAJARAN MENDALAM (RPP / MODUL AJAR)", meta, st.session_state.rpp_output)
+        st.download_button(
+            label="📥 Download RPP (.docx) - Eco-Friendly", 
+            data=file_doc, 
+            file_name=f"RPP_KBC_{v_subtopik.replace(' ', '_')}.docx"
+        )
 
 
-# --- MENU 2: MENYUSUN KISI-KISI ---
+# =========================================================================
+# 📊 MENU 2: MENYUSUN KISI-KISI SOAL
+# =========================================================================
 elif menu_utama == "📊 Menyusun Kisi-Kisi":
     st.header("Modul Penyusunan Kisi-Kisi Instrumen Soal")
+    st.subheader("📋 Formulir Input Data Kisi-Kisi")
     
-    # Form input khusus untuk menu Kisi-kisi
     col1, col2 = st.columns(2)
     with col1:
-        st.session_state.kisi_data["nama_guru"] = st.text_input("Nama Guru:", value=st.session_state.kisi_data["nama_guru"], key="k_guru")
-        st.session_state.kisi_data["mapel"] = st.text_input("Mata Pelajaran:", value=st.session_state.kisi_data["mapel"], key="k_mapel")
+        k_madrasah = st.text_input("Nama Madrasah:", value="MAN 2 KOTA MAKASSAR", key="k_m")
+        k_guru = st.text_input("Nama Guru:", value="Kaharuddin, S.Pd", key="k_g")
+        k_mapel = st.text_input("Mata Pelajaran:", value="PPKn", key="k_mp")
     with col2:
-        st.session_state.kisi_data["topik"] = st.text_input("Topik Pokok:", value=st.session_state.kisi_data["topik"], key="k_topik")
-        col_sub1, col_sub2 = st.columns(2)
-        with col_sub1:
-            st.session_state.kisi_data["jumlah_soal"] = st.text_input("Jumlah Soal:", value=st.session_state.kisi_data["jumlah_soal"], key="k_jumlah")
-        with col_sub2:
-            st.session_state.kisi_data["level_kognitif"] = st.text_input("Level Kognitif:", value=st.session_state.kisi_data["level_kognitif"], key="k_level")
+        k_kelas = st.text_input("Kelas / Semester:", value="XII / Ganjil", key="k_kl")
+        k_materi = st.text_input("Materi Pokok / Sub Materi:", placeholder="Contoh: Tantangan Global Penegakan HAM di Indonesia")
+        k_tujuan = st.text_area("Tujuan Pembelajaran Soal Ujian:", placeholder="Contoh: Peserta didik mampu menganalisis dilema penegakan hukum dalam menjaga harmoni sosial...")
 
     st.markdown("---")
     
-    st.session_state.kisi_data["konten"] = st.text_area(
-        "Matriks Kisi-Kisi Soal (Format Tabel):", value=st.session_state.kisi_data["konten"], height=300, key="k_konten"
+    st.subheader("🖥️ Hasil Penyusunan Matriks Kisi-Kisi")
+    st.session_state.kisi_output = st.text_area(
+        "Draf Teks Kisi-Kisi (Format Tabel):", 
+        value=st.session_state.kisi_output, 
+        height=400
     )
     
-    if st.button("✨ Generate Kisi-Kisi Soal dengan Gemini", key="btn_kisi_run"):
-        with st.spinner("AI sedang merancang tabel kisi-kisi..."):
-            prompt = f"Buatlah tabel kisi-kisi soal evaluasi sejumlah {st.session_state.kisi_data['jumlah_soal']} nomor dengan dominasi level kognitif {st.session_state.kisi_data['level_kognitif']} untuk materi '{st.session_state.kisi_data['topik']}' mata pelajaran {st.session_state.kisi_data['mapel']} kelas XII. Gunakan format tabel Markdown dengan kolom: No, Kompetensi Dasar/Indikator, Indikator Soal, Level Kognitif (C1-C6), Bentuk Soal, Nomor Soal. Buat sepadat mungkin demi hemat kertas."
-            hasil = panggil_ai(prompt)
-            if hasil:
-                st.session_state.kisi_data["konten"] = hasil
-                st.rerun()
-                
+    if st.button("✨ Generate Matriks Kisi-Kisi (Deep Learning + KBC)"):
+        if not k_materi or not k_tujuan:
+            st.error("Silakan lengkapi Materi Pokok dan Tujuan Pembelajaran!")
+        else:
+            with st.spinner("AI sedang menyusun matriks tabel kisi-kisi HOTS & KBC..."):
+                prompt_kisi = f"""
+                Bertindaklah sebagai seorang Ahli Kurikulum, Desainer Instruksional, dan Pengembang Evaluasi Pembelajaran. 
+                Susun Kisi-Kisi Penulisan Soal yang mengintegrasikan Pendekatan Deep Learning (Mindful, Meaningful, Joyful Learning) dan esensi Kurikulum Berbasis Cinta (KBC).
+
+                Data awal:
+                - Mata Pelajaran: {k_mapel}
+                - Kelas / Semester: {k_kelas}
+                - Materi Pokok : {k_materi}
+                - Tujuan Pembelajaran : {k_tujuan}
+
+                Ketentuan Penyusunan Kisi-Kisi:
+                1. Indikator Soal (IKTP): Diarahkan pada kemampuan berpikir kritis (Mindful), pemecahan masalah kontekstual nyata sehari-hari (Meaningful), memicu rasa ingin tahu tanpa rasa takut (Joyful).
+                2. Dimensi KBC: Sisipkan aspek Kurikulum Berbasis Cinta seperti empati, kepedulian sosial/lingkungan, gotong royong, kasih sayang, atau nilai kemanusiaan dalam stimulus soal.
+                3. Bentuk Stimulus: Harus berbasis kasus nyata, cerita inspiratif, dilema moral, atau fenomena sehari-hari yang dekat dengan dunia anak.
+
+                Format Output Kisi-Kisi wajib berupa TABEL MARKDOWN dengan kolom-kolom berikut:
+                1. No. | 2. Tujuan Pembelajaran (TP) | 3. Materi Pokok | 4. Indikator Soal | 5. Dimensi Deep Learning & KBC yang Tersirat | 6. Level Kognitif (C4/C5/C6) | 7. Bentuk Soal | 8. No. Soal
+
+                Berikan juga 1 contoh konkret draf soal berdasarkan salah satu baris kisi-kisi yang Anda buat agar saya mendapatkan gambaran utuh. Gunakan bahasa yang hangat, profesional, dan inspiratif. Buat sepadat mungkin demi hemat kertas cetak.
+                """
+                hasil = panggil_ai(prompt_kisi)
+                if hasil:
+                    st.session_state.kisi_output = hasil
+                    st.success("Kisi-kisi berhasil dibuat!")
+                    st.rerun()
+
     st.markdown("---")
-    if st.session_state.kisi_data["konten"]:
-        kisi_components = [("MATRIKS KISI-KISI INSTRUMEN PENILAIAN", st.session_state.kisi_data["konten"])]
-        file_doc = buat_dokumen_word("KISI-KISI SOAL EVALUASI", st.session_state.kisi_data["nama_guru"], st.session_state.kisi_data["mapel"], st.session_state.kisi_data["topik"], kisi_components)
-        st.download_button(label="📥 Unduh Kisi-Kisi Soal (.docx)", data=file_doc, file_name=f"Kisi_Kisi_{st.session_state.kisi_data['topik'].replace(' ', '_')}.docx")
+    if st.session_state.kisi_output:
+        meta = {"madrasah": k_madrasah, "guru": k_guru, "mapel": k_mapel, "kelas": k_kelas, "topik": k_materi, "waktu": "-"}
+        file_doc = buat_dokumen_word_kbc("KISI-KISI PENULISAN SOAL EVALUASI", meta, st.session_state.kisi_output)
+        st.download_button(
+            label="📥 Download Kisi-Kisi (.docx) - Eco-Friendly", 
+            data=file_doc, 
+            file_name=f"Kisi_Kisi_KBC_{k_materi.replace(' ', '_')}.docx"
+        )
 
 
-# --- MENU 3: MEMBUAT SOAL ---
+# =========================================================================
+# ❓ MENU 3: MEMBUAT SOAL EVALUASI
+# =========================================================================
 elif menu_utama == "❓ Membuat Soal":
     st.header("Modul Pembuatan Lembar Soal & Kunci Jawaban")
+    st.subheader("📋 Formulir Input Spesifikasi Bank Soal")
     
-    # Form input khusus untuk menu Bank Soal
     col1, col2 = st.columns(2)
     with col1:
-        st.session_state.soal_data["nama_guru"] = st.text_input("Nama Guru:", value=st.session_state.soal_data["nama_guru"], key="s_guru")
-        st.session_state.soal_data["mapel"] = st.text_input("Mata Pelajaran:", value=st.session_state.soal_data["mapel"], key="s_mapel")
+        s_madrasah = st.text_input("Nama Madrasah:", value="MAN 2 KOTA MAKASSAR", key="s_m")
+        s_guru = st.text_input("Nama Guru:", value="Kaharuddin, S.Pd", key="s_g")
+        s_mapel = st.text_input("Mata Pelajaran:", value="PPKn", key="s_mp")
+        s_kelas = st.text_input("Kelas / Semester:", value="XII / Ganjil", key="s_kl")
     with col2:
-        st.session_state.soal_data["topik"] = st.text_input("Topik Pokok:", value=st.session_state.soal_data["topik"], key="s_topik")
-        col_sub1, col_sub2 = st.columns(2)
-        with col_sub1:
-            st.session_state.soal_data["jumlah_pg"] = st.text_input("Jumlah Pilihan Ganda:", value=st.session_state.soal_data["jumlah_pg"], key="s_pg")
-        with col_sub2:
-            st.session_state.soal_data["jumlah_esai"] = st.text_input("Jumlah Esai HOTS:", value=st.session_state.soal_data["jumlah_esai"], key="s_esai")
+        s_materi = st.text_input("Materi Pokok / Bahasan Ujian:", placeholder="Contoh: Implementasi Etika Konstitusi dalam Kehidupan Berbangsa")
+        s_jumlah_pg = st.text_input("Jumlah Soal Pilihan Ganda Kompleks:", value="3")
+        s_jumlah_esai = st.text_input("Jumlah Soal Esai / Studi Kasus HOTS:", value="2")
 
     st.markdown("---")
     
-    st.session_state.soal_data["konten"] = st.text_area(
-        "Naskah Soal & Kunci Jawaban:", value=st.session_state.soal_data["konten"], height=300, key="s_konten"
+    st.subheader("🖥️ Hasil Bank Soal Evaluasi KBC")
+    st.session_state.soal_output = st.text_area(
+        "Naskah Lembar Soal & Kunci Jawaban:", 
+        value=st.session_state.soal_output, 
+        height=400
     )
     
-    if st.button("✨ Generate Paket Soal dengan Gemini", key="btn_soal_run"):
-        with st.spinner("AI sedang menyusun daftar soal..."):
-            prompt = f"Buatlah paket lembar soal evaluasi berdasarkan Kurikulum Berbasis Cinta (KBC) dan materi '{st.session_state.soal_data['topik']}' untuk {st.session_state.soal_data['mapel']} kelas XII. Terdiri dari {st.session_state.soal_data['jumlah_pg']} soal pilihan ganda (beserta pilihan A, B, C, D, E disusun horizontal agar hemat kertas) dan {st.session_state.soal_data['jumlah_esai']} soal esai HOTS mendalam yang mengintegrasikan nilai ekoteologi. Sertakan Kunci Jawaban singkat di bagian paling bawah."
-            hasil = panggil_ai(prompt)
-            if hasil:
-                st.session_state.soal_data["konten"] = hasil
-                st.rerun()
-                
+    if st.button("✨ Generate Lembar Soal Mengetuk Hati (HOTS + KBC)"):
+        if not s_materi:
+            st.error("Silakan lengkapi kolom Materi Pokok terlebih dahulu!")
+        else:
+            with st.spinner("AI sedang merancang paket soal narasi-numerasi humanis mendalam..."):
+                prompt_soal = f"""
+                Bertindaklah sebagai pembuat soal evaluasi profesional. Buatlah paket soal untuk:
+                - Mata Pelajaran: {s_mapel}
+                - Kelas / Semester: {s_kelas}
+                - Materi Pokok: {s_materi}
+                - Target: {s_jumlah_pg} Soal Pilihan Ganda Kompleks dan {s_jumlah_esai} Soal Esai/Studi Kasus HOTS.
+
+                Ketentuan dan Karakteristik Soal yang Harus Diikuti:
+                1. Elemen Deep Learning:
+                   - Mindful: Soal harus mengajak siswa berpikir kritis, berefleksi, dan menyadari dampak dari ilmu tersebut terhadap diri sendiri atau lingkungan.
+                   - Meaningful: Soal harus berbasis studi kasus nyata (kontekstual), problem-solving, dan relevan dengan kehidupan sehari-hari siswa (bukan hafalan mati).
+                   - Joyful: Soal disajikan dengan narasi yang menarik, menantang rasa ingin tahu, menggunakan bahasa yang memotivasi, dan tidak memicu kecemasan (anxiety-free assessment).
+
+                2. Elemen Kurikulum Berbasis Cinta (KBC):
+                   - Soal harus menginsersikan nilai cinta kasih (cinta sesama, cinta lingkungan, cinta tanah air, atau cinta ilmu pengetahuan).
+                   - Mengandung muatan empati, kepedulian sosial, kolaborasi, atau solusi humanis.
+                   - Pilihan jawaban atau rubrik penilaian harus menghargai proses berpikir dan sisi kemanusiaan siswa.
+                   - Jika ada opsi Pilihan Ganda, susun pilihan jawaban A, B, C, D, E secara horizontal/menyamping untuk menghemat baris kertas.
+
+                Format Output yang Saya Inginkan:
+                - Buatkan soal yang menyentuh hati dan penalaran tingkat tinggi (HOTS), bersifat narasi atau numerasi.
+                - Lengkapi setiap nomor soal dengan komponen wajib berikut:
+                  a. Stimulus/Konteks (Cerita atau skenario yang relevan).
+                  b. Pertanyaan yang diajukan.
+                  c. Kunci Jawaban / Rubrik Penilaian Reflektif.
+                  d. Penjelasan Mengapa Soal Ini Memenuhi Unsur Deep Learning & KBC.
+
+                Gunakan bahasa yang santun, hangat, inspiratif, dan mudah dipahami oleh siswa. Buat dokumen sepadat mungkin demi kebaikan lingkungan (hemat kertas).
+                """
+                hasil = panggil_ai(prompt_soal)
+                if hasil:
+                    st.session_state.soal_output = hasil
+                    st.success("Paket Soal Evaluasi KBC berhasil dirumuskan!")
+                    st.rerun()
+
     st.markdown("---")
-    if st.session_state.soal_data["konten"]:
-        soal_components = [("LEMBAR EVALUASI SISWA & KUNCI JAWABAN", st.session_state.soal_data["konten"])]
-        file_doc = buat_dokumen_word("LEMBAR SOAL EVALUASI PEMBELAJARAN", st.session_state.soal_data["nama_guru"], st.session_state.soal_data["mapel"], st.session_state.soal_data["topik"], soal_components)
-        st.download_button(label="📥 Unduh Lembar Soal (.docx)", data=file_doc, file_name=f"Soal_Evaluasi_{st.session_state.soal_data['topik'].replace(' ', '_')}.docx")
+    if st.session_state.soal_output:
+        meta = {"madrasah": s_madrasah, "guru": s_guru, "mapel": s_mapel, "kelas": s_kelas, "topik": s_materi, "waktu": "-"}
+        file_doc = buat_dokumen_word_kbc("LEMBAR EVALUASI SISWA & KUNCI JAWABAN", meta, st.session_state.soal_output)
+        st.download_button(
+            label="📥 Download Lembar Soal (.docx) - Eco-Friendly", 
+            data=file_doc, 
+            file_name=f"Soal_Evaluasi_KBC_{s_materi.replace(' ', '_')}.docx"
+        )
