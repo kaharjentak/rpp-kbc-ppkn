@@ -36,7 +36,7 @@ menu_utama = st.sidebar.radio(
 st.title("🍎 Sistem Perencanaan & Evaluasi Pembelajaran (KBC)")
 st.caption("Edisi Eco-Friendly (Pembelajaran Mendalam): MAN 2 Kota Makassar")
 
-# --- 4. INISIALISASI SESSION STATE DATA (BERDIRI SENDIRI-SENDIRI) ---
+# --- 4. INISIALISASI SESSION STATE DATA ---
 if 'rpp_output' not in st.session_state:
     st.session_state.rpp_output = ""
 if 'kisi_output' not in st.session_state:
@@ -61,7 +61,7 @@ def panggil_ai(prompt):
             st.error(f"Terjadi kesalahan: {str(e)}")
         return ""
 
-# --- 6. FUNGSI FORMAT WORD EKSPOR OTOMATIS (ECO-FRIENDLY) ---
+# --- 6. FUNGSI FORMAT WORD EKSPOR (ELEGAN & ECO-FRIENDLY) ---
 def set_cell_background(cell, color_hex):
     shading_xml = f'<w:shd {nsdecls("w")} w:fill="{color_hex}"/>'
     cell._tc.get_or_add_tcPr().append(parse_xml(shading_xml))
@@ -76,7 +76,7 @@ def format_cell_margins(cell, top=60, bottom=60, left=100, right=100):
         tcMar.append(node)
     tcPr.append(tcMar)
 
-def pasang_garis_pembatas_tabel(table, color_hex="D1D5DB"):
+def pasang_garis_pembatas_tabel(table, color_hex="CBD5E1"):
     tblPr = table._tbl.tblPr
     borders_xml = f"""
     <w:tblBorders {nsdecls("w")}>
@@ -93,7 +93,7 @@ def pasang_garis_pembatas_tabel(table, color_hex="D1D5DB"):
 def buat_dokumen_word_kbc(judul_dokumen, metadata, isi_konten):
     doc = Document()
     
-    # Margin super sempit 1.5 cm / 0.6 Inci (Eco-Friendly)
+    # MARGIN SUPER SEMPIT (1.5 cm / 0.6 Inci) - Eco-Friendly & Tetap Elegan
     for section in doc.sections:
         section.page_width = Inches(8.27)
         section.page_height = Inches(11.69)
@@ -102,31 +102,34 @@ def buat_dokumen_word_kbc(judul_dokumen, metadata, isi_konten):
         section.left_margin = Inches(0.6)
         section.right_margin = Inches(0.6)
 
-    # Header Atas Dokumen
+    # HEADER IDENTITAS UTAMA (DESAIN ELEGAN)
     header_p = doc.add_paragraph()
     header_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    header_p.paragraph_format.space_after = Pt(2)
+    
     h_run = header_p.add_run(f"{judul_dokumen}\n")
     h_run.font.name = 'Georgia'
     h_run.font.size = Pt(13)
     h_run.font.bold = True
-    h_run.font.color.rgb = RGBColor(26, 54, 93)
+    h_run.font.color.rgb = RGBColor(26, 54, 93)  # Navy Blue
     
-    sub_run = header_p.add_run("Kurikulum Berbasis Cinta (KBC) — MAN 2 Kota Makassar\n")
+    sub_run = header_p.add_run("Integrasi Ekoteologi dalam Kurikulum Berbasis Cinta (KBC) — MAN 2 Kota Makassar\n")
     sub_run.font.name = 'Arial'
     sub_run.font.size = Pt(9.5)
     sub_run.font.italic = True
-    sub_run.font.color.rgb = RGBColor(100, 110, 125)
+    sub_run.font.color.rgb = RGBColor(115, 125, 140)  # Muted Gray
 
-    # Tabel Ringkas Identitas Madrasah
+    # Tabel Ringkas Identitas Madrasah (Desain Clean)
     meta_table = doc.add_table(rows=3, cols=4)
     meta_table.alignment = WD_TABLE_ALIGNMENT.CENTER
-    pasang_garis_pembatas_tabel(meta_table, "A0AEC0")
+    pasang_garis_pembatas_tabel(meta_table, "CBD5E1")  # Garis abu-abu terang yang halus
     
     identitas_data = [
         ("Nama Madrasah", f": {metadata.get('madrasah', 'MAN 2 KOTA MAKASSAR')}", "Nama Guru", f": {metadata.get('guru', 'Kaharuddin, S.Pd')}"),
         ("Mata Pelajaran", f": {metadata.get('mapel', 'PPKn')}", "Fase/Kelas/Smt", f": {metadata.get('kelas', 'F / XII / Ganjil')}"),
-        ("Topik Pokok", f": {metadata.get('topik', '')}", "Alokasi Waktu", f": {metadata.get('waktu', '')}")
+        ("Topik Pokok", f": {metadata.get('topik', '')}", "Jenis Asesmen / Waktu", f": {metadata.get('waktu', '')}")
     ]
+    
     for i, (k1, v1, k2, v2) in enumerate(identitas_data):
         row = meta_table.rows[i]
         row.cells[0].text = k1
@@ -134,16 +137,28 @@ def buat_dokumen_word_kbc(judul_dokumen, metadata, isi_konten):
         row.cells[2].text = k2
         row.cells[3].text = v2
         for cell in row.cells:
-            format_cell_margins(cell, top=40, bottom=40, left=80, right=80)
+            format_cell_margins(cell, top=50, bottom=50, left=90, right=90)
             for p in cell.paragraphs:
+                p.paragraph_format.line_spacing = 1.0
                 for r in p.runs:
                     r.font.name = 'Arial'
                     r.font.size = Pt(9.5)
-                    r.font.color.rgb = RGBColor(45, 55, 72)
+                    r.font.color.rgb = RGBColor(71, 85, 105)  # Slate Gray
 
-    doc.add_paragraph().paragraph_format.space_after = Pt(4)
+    # Garis pembatas horizontal hiasan di bawah header
+    border_p = doc.add_paragraph()
+    border_p.paragraph_format.space_before = Pt(4)
+    border_p.paragraph_format.space_after = Pt(8)
+    pBdr = OxmlElement('w:pBdr')
+    bottom_border = OxmlElement('w:bottom')
+    bottom_border.set(qn('w:val'), 'single')
+    bottom_border.set(qn('w:sz'), '6')
+    bottom_border.set(qn('w:space'), '1')
+    bottom_border.set(qn('w:color'), '1A365D') # Garis Navy Blue tipis
+    pBdr.append(bottom_border)
+    border_p._p.get_or_add_pPr().append(pBdr)
 
-    # Parsing teks markdown/tabel hasil dari AI ke format paragraf & tabel Word
+    # PARSING KONTEN TEKS & TABEL MARKDOWN
     baris_list = isi_konten.split('\n')
     di_dalam_tabel = False
     tabel_obj = None
@@ -153,7 +168,7 @@ def buat_dokumen_word_kbc(judul_dokumen, metadata, isi_konten):
         if not baris_bersih:
             continue
         
-        # Konversi Otomatis Tabel Markdown ke Tabel Word Resmi
+        # Logika Konversi Tabel otomatis
         if baris_bersih.startswith('|'):
             kolom_data = [k.strip() for k in baris_bersih.split('|')[1:-1]]
             if not kolom_data or all(c == '' or c.startswith('-') for c in kolom_data):
@@ -163,15 +178,15 @@ def buat_dokumen_word_kbc(judul_dokumen, metadata, isi_konten):
                 di_dalam_tabel = True
                 tabel_obj = doc.add_table(rows=0, cols=len(kolom_data))
                 tabel_obj.alignment = WD_TABLE_ALIGNMENT.CENTER
-                pasang_garis_pembatas_tabel(tabel_obj)
+                pasang_garis_pembatas_tabel(tabel_obj, "CBD5E1")
                 
-                # Header Tabel
+                # Desain Header Tabel (Biru Dongker, Teks Putih Bold)
                 row = tabel_obj.add_row()
                 for idx, teks in enumerate(kolom_data):
                     cell = row.cells[idx]
                     cell.text = teks
-                    set_cell_background(cell, "1A365D")
-                    format_cell_margins(cell, top=70, bottom=70, left=90, right=90)
+                    set_cell_background(cell, "1A365D")  # Deep Navy
+                    format_cell_margins(cell, top=80, bottom=80, left=100, right=100)
                     for p_cell in cell.paragraphs:
                         p_cell.alignment = WD_ALIGN_PARAGRAPH.CENTER
                         if p_cell.runs:
@@ -181,46 +196,51 @@ def buat_dokumen_word_kbc(judul_dokumen, metadata, isi_konten):
                             p_cell.runs[0].font.size = Pt(9.5)
                 continue
             
-            # Baris Isian Tabel
+            # Isian Baris Tabel Konten
             row = tabel_obj.add_row()
             for idx, teks in enumerate(kolom_data):
                 cell = row.cells[idx]
                 cell.text = teks
                 format_cell_margins(cell, top=60, bottom=60, left=90, right=90)
                 for p_cell in cell.paragraphs:
+                    p_cell.alignment = WD_ALIGN_PARAGRAPH.LEFT
                     for r in p_cell.runs:
                         r.font.name = 'Arial'
                         r.font.size = Pt(9.5)
+                        r.font.color.rgb = RGBColor(51, 65, 85)
         else:
             di_dalam_tabel = False
             
-            # Format Judul Bab/Heading Utama
+            # Desain Judul Bab / Komponen Utama
             if baris_bersih.startswith(('A.', 'B.', 'C.', 'D.', 'E.', 'F.', 'G.', 'H.', 'I.', 'J.', 'K.', 'Langkah', 'AWAL', 'INTI', 'PENUTUP', 'ALAT', '1.', '2.', '3.')):
                 p = doc.add_paragraph()
-                p.paragraph_format.space_before = Pt(6)
-                p.paragraph_format.space_after = Pt(2)
+                p.paragraph_format.space_before = Pt(8)
+                p.paragraph_format.space_after = Pt(3)
+                p.paragraph_format.keep_with_next = True
+                
                 run = p.add_run(baris_bersih)
                 run.font.bold = True
                 run.font.name = 'Georgia'
                 run.font.size = Pt(11)
-                run.font.color.rgb = RGBColor(26, 54, 93)
+                run.font.color.rgb = RGBColor(26, 54, 93)  # Navy Blue
             else:
-                # Paragraf Teks Biasa
+                # Format Paragraf Isi Teks Biasa (Justify)
                 p = doc.add_paragraph()
-                p.paragraph_format.space_after = Pt(2)
-                p.paragraph_format.line_spacing = 1.05
+                p.paragraph_format.space_after = Pt(3)
+                p.paragraph_format.line_spacing = 1.15
+                p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
                 
-                # Fungsi cetak teks tebal (bold markdown **)
                 parts = re.split(r'(\*\*.*?\*\*)', baris_bersih)
                 for part in parts:
                     if part.startswith('**') and part.endswith('**'):
                         run = p.add_run(part[2:-2])
                         run.font.bold = True
+                        run.font.color.rgb = RGBColor(15, 23, 42)
                     else:
                         run = p.add_run(part)
+                        run.font.color.rgb = RGBColor(51, 65, 85)
                     run.font.name = 'Arial'
                     run.font.size = Pt(10)
-                    run.font.color.rgb = RGBColor(45, 55, 72)
                     
     output = BytesIO()
     doc.save(output)
@@ -235,7 +255,6 @@ if menu_utama == "📝 Menyusun RPP":
     st.header("Modul Perencanaan Pembelajaran Mendalam & KBC")
     st.subheader("📋 Formulir Input Data Utama RPP")
     
-    # Grid input data formulir di layar utama
     col1, col2 = st.columns(2)
     with col1:
         v_madrasah = st.text_input("Nama Madrasah:", value="MAN 2 KOTA MAKASSAR")
@@ -250,7 +269,6 @@ if menu_utama == "📝 Menyusun RPP":
 
     st.markdown("---")
     
-    # Area Output Hasil RPP
     st.subheader("🖥️ Hasil Penyusunan Dokumen RPP")
     st.session_state.rpp_output = st.text_area(
         "Draf Teks RPP (Dapat diedit manual sebelum diunduh):", 
@@ -398,7 +416,6 @@ elif menu_utama == "❓ Membuat Soal":
         s_mapel = st.text_input("Mata Pelajaran:", value="PPKn", key="s_mp")
         s_kelas = st.text_input("Kelas / Semester:", value="XII / Ganjil", key="s_kl")
         
-        # TAMBAHAN 1: Input Pilihan Jenis Asesmen
         s_jenis_asesmen = st.selectbox(
             "Jenis Asesmen:", 
             ["Asesmen Formatif", "Asesmen Sumatif", "Penilaian Harian", "Ujian Tengah Semester (UTS)", "Ujian Akhir Semester (UAS)"],
@@ -407,10 +424,7 @@ elif menu_utama == "❓ Membuat Soal":
     with col2:
         s_materi = st.text_input("Materi Pokok / Bahasan Ujian:", placeholder="Contoh: Implementasi Etika Konstitusi dalam Kehidupan Berbangsa")
         s_jumlah_pg = st.text_input("Jumlah Soal Pilihan Ganda Kompleks:", value="3")
-        
-        # TAMBAHAN 2: Input Jumlah Soal Benar / Salah
-        s_jumlah_bs = st.text_input("Jumlah Soal Benar / Salah:", value="2", key="s_bs")
-        
+        s_jumlah_bs = st.text_input("Jumlah Soal Tipe Benar / Salah:", value="2", key="s_bs")
         s_jumlah_esai = st.text_input("Jumlah Soal Esai / Studi Kasus HOTS:", value="2")
 
     st.markdown("---")
@@ -427,7 +441,6 @@ elif menu_utama == "❓ Membuat Soal":
             st.error("Silakan lengkapi kolom Materi Pokok terlebih dahulu!")
         else:
             with st.spinner("AI sedang merancang paket soal narasi-numerasi humanis mendalam..."):
-                # PROMPT AI YANG SUDAH DISESUAIKAN DENGAN INPUT BARU BAPAK
                 prompt_soal = f"""
                 Bertindaklah sebagai pembuat soal evaluasi profesional. Buatlah paket soal untuk:
                 - Nama Madrasah: {s_madrasah}
@@ -450,7 +463,7 @@ elif menu_utama == "❓ Membuat Soal":
                 2. Elemen Kurikulum Berbasis Cinta (KBC):
                    - Soal harus menginsersikan nilai cinta kasih (cinta sesama, cinta lingkungan, cinta tanah air, atau cinta ilmu pengetahuan).
                    - Mengandung muatan empati, kepedulian sosial, kolaborasi, atau solusi humanis.
-                   - Pilihan jawaban atau rubrik penilaian harus menghargai proses berpikir dan sisi kemানুsiaan siswa.
+                   - Pilihan jawaban atau rubrik penilaian harus menghargai proses berpikir dan sisi kemanusiaan siswa.
                    - Untuk opsi Pilihan Ganda Kompleks, susun pilihan jawaban A, B, C, D, E secara horizontal/menyamping untuk menghemat baris kertas.
                    - Untuk opsi Benar / Salah, sertakan ruang singkat bagi siswa untuk memberikan alasan reflektif mereka mengapa memilih jawaban tersebut agar aspek Mindful tercapai.
 
